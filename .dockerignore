@@ -1,0 +1,36 @@
+# Git
+.git
+.gitignore
+
+# IDEs
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# Build artifacts
+target
+*.jar
+*.class
+
+# Node (if added in future)
+node_modules
+npm-debug.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+*.md
+CLAUDE.md
+ARCHITECTURE.md
+
+# OpenSpec
+openspec
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
