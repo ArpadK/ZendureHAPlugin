@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: zendure-ha-plugin
+
+homeassistant:
+  websocket-url: ${HA_WEBSOCKET_URL:ws://supervisor/core/websocket}
+  rest-url: ${HA_REST_URL:http://supervisor/core/api}
+  token: ${HA_TOKEN:}
+
+zendure:
+  device-ip: ${ZENDURE_DEVICE_IP:}
+  device-port: ${ZENDURE_DEVICE_PORT:13554}
+  device-serial: ${ZENDURE_DEVICE_SERIAL:}
+  max-charge-power: ${ZENDURE_MAX_CHARGE_POWER:}
+  max-discharge-power: ${ZENDURE_MAX_DISCHARGE_POWER:}
+  poll-interval-seconds: ${ZENDURE_POLL_INTERVAL_SECONDS:30}
+
+# Enable validation
+spring.validation.mode: ANNOTATED
+
+logging:
+  level:
+    root: ${LOG_LEVEL:INFO}
+    nl.jpoint.zendure: DEBUG

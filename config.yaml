@@ -1,0 +1,27 @@
+name: "Zendure Battery Control"
+description: "Control Zendure Solarflow battery — fast charge, fast discharge, or standby — via local zenSDK API."
+version: "0.1.0"
+slug: zendure_battery_control
+arch:
+  - amd64
+homeassistant_api: true
+ingress: true
+ingress_port: 8099
+panel_icon: mdi:battery
+panel_title: "Battery"
+options:
+  device_ip: ""
+  device_port: 13248
+  device_serial: ""
+  max_charge_power: 2400
+  max_discharge_power: 2400
+  poll_interval: 30
+  log_level: "info"
+schema:
+  device_ip: str
+  device_port: int
+  device_serial: str
+  max_charge_power: int
+  max_discharge_power: int
+  poll_interval: int
+  log_level: list(debug|info|warn|error)
