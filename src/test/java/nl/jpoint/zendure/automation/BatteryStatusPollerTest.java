@@ -273,7 +273,9 @@ class BatteryStatusPollerTest {
     static class StubZendureRestClient implements DeviceClient {
 
         private Map<String, Object> propertiesReport;
+        private boolean writeSuccess = true;
         private RuntimeException exceptionToThrow;
+        private java.util.List<Map<String, Object>> lastWritePayloads = new java.util.ArrayList<>();
 
         @Override
         public Optional<Map<String, Object>> getPropertiesReport() {
@@ -285,15 +287,34 @@ class BatteryStatusPollerTest {
 
         @Override
         public Optional<Void> writeProperties(Map<String, Object> properties) {
-            return Optional.of((Void) null);
+            if (exceptionToThrow != null) {
+                throw exceptionToThrow;
+            }
+            lastWritePayloads.add(Map.copyOf(properties));
+            // Return present optional on success, empty on failure
+            if (writeSuccess) {
+                // Void is a special type; we return a present Optional containing null
+                Void voidValue = null;
+                return Optional.of(voidValue);
+            } else {
+                return Optional.empty();
+            }
         }
 
         void setPropertiesReport(Map<String, Object> report) {
             this.propertiesReport = report;
         }
 
+        void setWriteSuccess(boolean success) {
+            this.writeSuccess = success;
+        }
+
         void setThrowException(RuntimeException exception) {
             this.exceptionToThrow = exception;
+        }
+
+        java.util.List<Map<String, Object>> getLastWritePayloads() {
+            return lastWritePayloads;
         }
     }
 }

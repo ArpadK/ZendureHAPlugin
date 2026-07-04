@@ -220,7 +220,14 @@ class BatteryModeControlAutomationTest {
                 throw exceptionToThrow;
             }
             lastWritePayloads.add(Map.copyOf(properties));
-            return writeSuccess ? Optional.of((Void) null) : Optional.empty();
+            // Return present optional on success, empty on failure
+            if (writeSuccess) {
+                // Void is a special type; we return a present Optional containing null
+                Void voidValue = null;
+                return Optional.of(voidValue);
+            } else {
+                return Optional.empty();
+            }
         }
 
         void setPropertiesReport(Map<String, Object> report) {

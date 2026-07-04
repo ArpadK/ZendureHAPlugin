@@ -54,9 +54,33 @@ Ensure your Home Assistant instance is running and you have access to the add-on
 
 ## Installation
 
-1. **Add the Repository** (if not already done):
+### Option A: Install via HACS (Recommended)
+
+[HACS](https://hacs.xyz/) is the Home Assistant Community Store, a package manager for Home Assistant add-ons, integrations, and scripts.
+
+1. **Install HACS** (if not already installed):
+   - Visit [HACS Installation](https://hacs.xyz/docs/setup/prerequisites) for detailed instructions.
+   - Briefly: add the HACS integration via **Settings** → **Devices & Services** → **Create Automation** → **HACS**.
+
+2. **Add the Repository**:
+   - In Home Assistant, open **HACS** → **⋮ (menu)** → **Custom repositories**.
+   - Add the repository URL: `https://github.com/arpadkolkert/ZendureHAPlugin`
+   - Select **Category**: `Add-ons`
+   - Click **Create**.
+
+3. **Install the Add-on**:
+   - In **HACS**, go to **Add-ons** and search for "Zendure Battery Control" or "ZendureHAPlugin".
+   - Click the entry, then **Install**.
+   - Wait for the download and installation to complete.
+
+4. **Configure the Add-on** (see below).
+
+### Option B: Install via Add-on Store (Manual Repository)
+
+1. **Add the Repository**:
    - In Home Assistant, go to **Settings** → **Add-ons** → **Add-on Store** → **⋮ (menu)** → **Repositories**.
-   - Add the repository URL for this add-on (contact the maintainer for the repository URL).
+   - Add the repository URL: `https://github.com/arpadkolkert/ZendureHAPlugin`
+   - Click **Create**.
    - Refresh the store.
 
 2. **Install the Add-on**:
@@ -64,21 +88,30 @@ Ensure your Home Assistant instance is running and you have access to the add-on
    - Click **Install**.
    - Wait for the build and installation to complete.
 
-3. **Configure the Add-on**:
-   - Once installed, click **Configuration**.
-   - Fill in the required fields:
-     - **Device IP**: The LAN IP address of your Zendure device.
-     - **Device Port**: The port the zenSDK API listens on (default: `13248`).
-     - **Device Serial**: The device's serial number (e.g., `48xxxxxxxxxx`).
-     - **Max Charge Power** (W): Maximum power for fast charging (e.g., `2400`).
-     - **Max Discharge Power** (W): Maximum power for fast discharging (e.g., `2400`).
-     - **Poll Interval** (seconds): How often to refresh device status (e.g., `30`).
-     - **Log Level**: `debug`, `info` (default), `warn`, or `error`.
-   - Click **Save**.
+3. **Configure the Add-on** (see below).
 
-4. **Start the Add-on**:
-   - Click **Start** on the add-on page.
-   - Observe the logs to ensure a successful startup (you should see "HA authenticated" or similar).
+### Configuration
+
+Once installed (via HACS or the add-on store):
+
+1. Click **Configuration** on the add-on page.
+2. Fill in the required fields:
+   - **Device IP** *(required)*: The LAN IP address of your Zendure device.
+   - **Device Port**: The port the zenSDK API listens on (default: `13248`).
+   - **Device Serial** *(required)*: The device's serial number (e.g., `48xxxxxxxxxx`).
+   - **Max Charge Power** (W): Maximum power for fast charging (default: `2400`).
+   - **Max Discharge Power** (W): Maximum power for fast discharging (default: `2400`).
+   - **Poll Interval** (seconds): How often to refresh device status (default: `30`).
+   - **Log Level**: `debug`, `info` (default), `warn`, or `error`.
+3. Click **Save**.
+
+### Start the Add-on
+
+1. Click **Start** on the add-on page.
+2. Observe the logs to ensure a successful startup. You should see messages like:
+   - "Home Assistant authenticated"
+   - "Publishing virtual entities"
+   - "Battery status poller started"
 
 ## Configuration Reference
 
@@ -96,28 +129,152 @@ All configuration is done through the Home Assistant add-on options interface. B
 
 ## Home Assistant Entities
 
-Once the add-on is running and connected to your Home Assistant instance, the following entities are automatically created:
+Once the add-on is running and connected to your Home Assistant instance, the following entities are automatically created and available in the Home Assistant UI and automations.
 
-### Control Entity
+### Summary
 
-- **Entity ID**: `select.zendure_battery_mode`
-- **Type**: Select
-- **Options**: `Fast Charge`, `Fast Discharge`, `Standby`
-- **Description**: Select the desired operating mode. Changes are sent immediately to the device.
+| Entity ID | Type | Mode | Description |
+|-----------|------|------|-------------|
+| `select.zendure_battery_mode` | Select | Read/Write | Battery operating mode control |
+| `sensor.zendure_battery_mode_status` | Sensor | Read-only | Current device operating mode |
+| `sensor.zendure_battery_soc` | Sensor | Read-only | Battery state-of-charge (%) |
 
-### Status Entities
+### Detailed Entity Reference
 
-- **Entity ID**: `sensor.zendure_battery_mode_status`
-  - **Type**: Sensor
-  - **Description**: Displays the device's current operating mode (read-only).
-  - **Values**: `fast_charge`, `fast_discharge`, `standby`, `unknown`, or `unavailable`.
+#### Control Entity
 
-- **Entity ID**: `sensor.zendure_battery_soc`
-  - **Type**: Sensor
-  - **Description**: Displays the battery's current state-of-charge (read-only).
-  - **Unit**: Percentage (%)
-  - **Update Frequency**: Every `poll_interval` seconds (default: 30 s).
-  - **State**: `unavailable` if the device cannot be reached.
+**`select.zendure_battery_mode`**
+- **Type**: Select (writable)
+- **Options**:
+  - `Fast Charge` — Charge at maximum configured power
+  - `Fast Discharge` — Discharge at maximum configured power
+  - `Standby` — Stop charging and discharging
+- **Default**: `Standby`
+- **Update Behavior**: Selection is published to Home Assistant immediately and sent to the device within 1 second.
+- **Usage in Automations**:
+  ```yaml
+  - service: select.select_option
+    target:
+      entity_id: select.zendure_battery_mode
+    data:
+      option: "Fast Charge"
+  ```
+- **Accessible via**: Automations, scripts, Lovelace UI, history stats, and any Home Assistant service that works with select entities.
+
+#### Status Entities
+
+**`sensor.zendure_battery_mode_status`**
+- **Type**: Sensor (read-only)
+- **Description**: Reflects the device's current operating mode as reported by the battery.
+- **Possible States**:
+  - `fast_charge` — Device is charging at max power
+  - `fast_discharge` — Device is discharging at max power
+  - `standby` — Device is idle (not charging or discharging)
+  - `unknown` — Device reported an unrecognized mode value
+  - `unavailable` — Device is unreachable (check network and configuration)
+- **Update Frequency**: Every `poll_interval` seconds (default: 30 s).
+- **Note**: This sensor reflects *actual device state*, not the user's selection. If the user selects "Fast Charge" but the device is already fully charged, the device may reject the command and stay in standby; this sensor will show the true state.
+
+**`sensor.zendure_battery_soc`**
+- **Type**: Sensor (read-only)
+- **Unit**: Percentage (%)
+- **Range**: 0–100
+- **Description**: Battery state-of-charge reported by the device.
+- **Update Frequency**: Every `poll_interval` seconds (default: 30 s).
+- **State**: `unavailable` if the device cannot be reached or if the value is missing from the device report.
+- **Usage in Automations**:
+  ```yaml
+  - alias: Stop charging when battery is full
+    trigger:
+      platform: numeric_state
+      entity_id: sensor.zendure_battery_soc
+      above: 95
+    action:
+      service: select.select_option
+      target:
+        entity_id: select.zendure_battery_mode
+      data:
+        option: "Standby"
+  ```
+- **Accessible via**: History statistics, automations, templates, Lovelace gauges, and any Home Assistant service or card that works with numeric sensors.
+
+### Using Entities in Home Assistant
+
+#### In Automations
+
+```yaml
+# Example: Charge during cheap electricity hours
+- alias: Charge during off-peak
+  trigger:
+    platform: time
+    at: "22:00:00"
+  action:
+    service: select.select_option
+    target:
+      entity_id: select.zendure_battery_mode
+    data:
+      option: "Fast Charge"
+
+# Example: Discharge when price is high
+- alias: Discharge during peak
+  trigger:
+    platform: time
+    at: "18:00:00"
+  condition:
+    condition: numeric_state
+    entity_id: sensor.zendure_battery_soc
+    above: 50
+  action:
+    service: select.select_option
+    target:
+      entity_id: select.zendure_battery_mode
+    data:
+      option: "Fast Discharge"
+```
+
+#### In Lovelace Dashboard
+
+```yaml
+# Example card to display and control battery
+type: vertical-stack
+cards:
+  - type: entities
+    entities:
+      - entity: select.zendure_battery_mode
+        name: Battery Mode
+      - entity: sensor.zendure_battery_soc
+        name: Battery Charge
+      - entity: sensor.zendure_battery_mode_status
+        name: Device Status
+  
+  - type: gauge
+    entity: sensor.zendure_battery_soc
+    min: 0
+    max: 100
+    needle: true
+    segments:
+      - from: 0
+        color: red
+      - from: 20
+        color: orange
+      - from: 50
+        color: yellow
+      - from: 80
+        color: green
+```
+
+#### In Templates
+
+```yaml
+# Example template sensor for battery status
+- sensor:
+    - name: Battery State Description
+      unique_id: battery_state_description
+      state: >
+        {% set mode = states('select.zendure_battery_mode') %}
+        {% set soc = states('sensor.zendure_battery_soc') | int(0) %}
+        Mode: {{ mode }} | SOC: {{ soc }}%
+```
 
 ## Troubleshooting
 
