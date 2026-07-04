@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A Home Assistant (HA) plugin that interfaces with Zendure home battery systems. The project is in early development — no source files or build system exist yet.
 
+**Read `ARCHITECTURE.md`** for the durable architecture plan (layers, package layout, integration boundaries, config/genericity rules). Keep it in sync as the design evolves.
+
 ## Tech Stack
 
 - **Language:** Java (JDK 25 / Adoptium Temurin)
